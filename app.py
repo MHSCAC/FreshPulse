@@ -43,7 +43,7 @@ components.html(
 
 #We did use AI to help us to code this part. We have never used API keys or imported AI in a web app before, so we got AI to teach us how to code something like that.
 def aircpt(image):
-    apikey=st.secrets.get["geminiApiKey"] #Remember that API key is in .streamlit folder
+    apikey=st.secrets.get("geminiApiKey") #Remember that API key is in .streamlit folder
     client=genai.Client(api_key=apikey) #variable is basically a messenger which allows the web app to communicate with google AI
     aiprompt = "Analyze this grocery receipt image. Extract all food items. For each item, provide name, emoji, and estimated shelf life in days as an integer. Return ONLY a JSON list with keys: 'name', 'emoji', 'life'." #The prompt variable and text in it is the message that gets sent to Google AI with the user's uploaded receipt.
 
