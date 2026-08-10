@@ -8,6 +8,7 @@ import math
 import random
 #Streamlit==st, easier to write st rather that streamlit every time
 import streamlit as st
+import streamlit.components.v1 as components
 #datetime=python tool for tracking dates, in this case, expiration dates
 import datetime
 #Allows AI to see and read the uploaded image from the user
@@ -15,7 +16,22 @@ from PIL import Image
 import json
 from google import genai
 
+#Prevent Accidental Refreshes and To Alert User
 
+#Did use AI for this part
+components.html(
+    """
+    <script>
+    window.addEventListener('beforeunload', function (e) {
+        // Cancel the event to trigger the browser prompt
+        e.preventDefault();
+        // Chrome requires returnValue to be set
+        e.returnValue = '';
+    });
+    </script>
+    """,
+    height=0,
+)
 
 
 
@@ -89,7 +105,7 @@ if (st.sidebar.button("Add Item Manually")):
 #This part of the code allows the user to input pics of their grocery receipt or list 
 #which then gets sent to AI to process and return the keys to the code
 
-st.title("🥗 ProducePulse")#THIS IS THE NAME OF THE APP-REMEMBER TO ASK AARNAV IF HE WANTS TO CHANGE IT
+st.title("🥗 FreshPulse")#THIS IS THE NAME OF THE APP-REMEMBER TO ASK AARNAV IF HE WANTS TO CHANGE IT
 st.write("Keep Track of Your Food to Help Stop Grocery Waste!")
 types={"png", "jpg", "jpeg"}
 fileUpload=st.file_uploader("Enter A Pic of your Grocery Receipt or List Here:", type=types)
