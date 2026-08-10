@@ -43,16 +43,13 @@ components.html(
 
 #We did use AI to help us to code this part. We have never used API keys or imported AI in a web app before, so we got AI to teach us how to code something like that.
 def aircpt(image):
-    apikey=st.secrets["geminiApiKey"] #Remember that API key is in .streamlit folder
+    apikey=st.secrets.get["geminiApiKey"] #Remember that API key is in .streamlit folder
     client=genai.Client(api_key=apikey) #variable is basically a messenger which allows the web app to communicate with google AI
-    aiprompt="""Analyze this image of a grocery receipt/list.
-    Get all the purchased food items. Then for each item, provide the item name, a single matching/similar emoji
-    and also its estimated life in days(integer) until it expires or goes bad
-    ONLY return the three data in JSON format using keys: "name", "emoji, "life".""" #The prompt variable and text in it is the message that gets sent to Google AI with the user's uploaded receipt.
+    aiprompt = "Analyze this grocery receipt image. Extract all food items. For each item, provide name, emoji, and estimated shelf life in days as an integer. Return ONLY a JSON list with keys: 'name', 'emoji', 'life'." #The prompt variable and text in it is the message that gets sent to Google AI with the user's uploaded receipt.
 
     response=client.models.generate_content(
         model='gemini-2.5-flash', 
-        contents=[image,aiprompt] #This makes the code send the user's image and our prompt to Gemini
+        contents=[aiprompt,image] #This makes the code send the user's image and our prompt to Gemini
     )
     #CleanText Function will break if everything is not in one line, adding lines will overide and revert back to the original text given by the AI
     cleanText = response.text.replace("```json", "").replace("```", "").strip()
