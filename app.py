@@ -43,14 +43,18 @@ components.html(
 
 #We did use AI to help us to code this part. We have never used API keys or imported AI in a web app before, so we got AI to teach us how to code something like that.
 def aircpt(image):
-    apikey=st.secrets.get("geminiApiKey") #Remember that API key is in .streamlit folder
+    apikey = st.secrets.get("geminiApiKey")
+    if not apikey:
+        st.error("Missing geminiApiKey in Streamlit Secrets!")
+        return []
     client=genai.Client(api_key=apikey) #variable is basically a messenger which allows the web app to communicate with google AI
     aiprompt = "Analyze this grocery receipt image. Extract all food items. For each item, provide name, emoji, and estimated shelf life in days as an integer. Return ONLY a JSON list with keys: 'name', 'emoji', 'life'." #The prompt variable and text in it is the message that gets sent to Google AI with the user's uploaded receipt.
 
-    response=client.models.generate_content(
-        model='gemini-2.5-flash', 
-        contents=[aiprompt,image] #This makes the code send the user's image and our prompt to Gemini
-    )
+    response = client.models.generate_content(
+    model='gemini-2.5-flash', 
+    contents=[aiprompt, image],#This makes the code send the user's image and our prompt to Gemini
+    config={'response_mime_type': 'application/json'}
+)
     #CleanText Function will break if everything is not in one line, adding lines will overide and revert back to the original text given by the AI
     cleanText = response.text.replace("```json", "").replace("```", "").strip()
     return json.loads(cleanText)#This returns and makes the java text that Gemini gives us into python text, so the web app can read and use it.
@@ -111,7 +115,8 @@ if(fileUpload and analyzeBtn): #Makes the uplaoding file part and pressing the b
     img=Image.open(fileUpload)
     #The next lines we used AI help for because we needed to pass the image to AI for the Gemini to analyze it-We have never done this before
     with st.spinner("AI Is Processing Your Image"):#Loading Screen
-        prcsdItems=aircpt(img)
+        pil_image = Image.open(img)
+        prcsdItems = aircpt(Image.open(img))
     for item in prcsdItems: #Item is named here, code checks over each item AI proccessed one at a time
         life=int(item.get("life",6))#Defaults to 6 if AI doesn't give a item shelf life-IMPORTANT TO CHECK-Remember
         st.session_state["inventory"].append({#This statement of code takes in the life variable righ above,  the item variable(each item AI processed), and the life of each item which the AI returned as "life"
