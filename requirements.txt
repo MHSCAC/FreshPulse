@@ -1,9 +1,3 @@
-#This file will be used to tell VS code what packages to install
-#We first need to install streamlit, which allows us to create the web UI without HTML
-streamlit 
-"""Next we need to import Gemini AI which will allow the web app to use AI to obtain expiration dates
-and scan the user's uploaded receipts."""
-google-generative-ai
-"""The tool that allows the web app to read the text and obtain the pics of the receipts 
-will be pillow"""
-pillow
+streamlit
+google-genai
+Pillow
