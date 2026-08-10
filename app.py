@@ -115,7 +115,7 @@ if(fileUpload and analyzeBtn): #Makes the uplaoding file part and pressing the b
     img=Image.open(fileUpload)
     #The next lines we used AI help for because we needed to pass the image to AI for the Gemini to analyze it-We have never done this before
     with st.spinner("AI Is Processing Your Image"):#Loading Screen
-        prcsdItems = aircpt(Image.open(img))
+        prcsdItems = aircpt(img)
     for item in prcsdItems: #Item is named here, code checks over each item AI proccessed one at a time
         life=int(item.get("life",6))#Defaults to 6 if AI doesn't give a item shelf life-IMPORTANT TO CHECK-Remember
         st.session_state["inventory"].append({#This statement of code takes in the life variable righ above,  the item variable(each item AI processed), and the life of each item which the AI returned as "life"
