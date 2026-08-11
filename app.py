@@ -51,7 +51,7 @@ def aircpt(image):
     aiprompt = "Analyze this grocery receipt image. Extract all food items. For each item, provide name, emoji, and estimated shelf life in days as an integer. Return ONLY a JSON list with keys: 'name', 'emoji', 'life'." #The prompt variable and text in it is the message that gets sent to Google AI with the user's uploaded receipt.
 
     response = client.models.generate_content(
-    model='gemini-2.5-flash', 
+    model='gemini-flash-latest', #Cant use 2.5 flash, google retired it for new users
     contents=[aiprompt, image],#This makes the code send the user's image and our prompt to Gemini
     config={'response_mime_type': 'application/json'}
 )
