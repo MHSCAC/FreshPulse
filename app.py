@@ -48,8 +48,15 @@ def aircpt(image):
         st.error("Missing geminiApiKey in Streamlit Secrets!")
         return []
     client=genai.Client(api_key=apikey) #variable is basically a messenger which allows the web app to communicate with google AI
-    aiprompt = "Analyze this grocery receipt image. Extract all food items. For each item, provide name, emoji, and estimated shelf life in days as an integer. Return ONLY a JSON list with keys: 'name', 'emoji', 'life'." #The prompt variable and text in it is the message that gets sent to Google AI with the user's uploaded receipt.
-
+    #I did ask AI to create the prompt. My wording is kind of messy and confusing, so I told AI what I wanted the prompt to say and then the AI fixed and created the more neat prompt. Also figured that since this prmpt is for AI, then AI should prob creat the prompt
+    aiprompt = (
+    "Analyze this grocery receipt image. Extract all food items considering brand names when available. "
+    "For each item, estimate/extract: item name, emoji, shelf life in days (integer), "
+    "carbohydrates in grams (number), protein in grams (number), fat in grams (number), "
+    "and sodium in milligrams (number). "
+    "Return ONLY a JSON list with keys: 'name', 'emoji', 'life', 'carbs', 'protein', 'fat', 'sodium'."
+    #Basically asked AI to give the app the item name, a deisgnated emoji, a lifetime, the carbs, the protein, the fat, and sodium, of each item on the user's receipt
+)    
     response = client.models.generate_content(
     model='gemini-flash-latest', #Cant use 2.5 flash, google retired it for new users
     contents=[aiprompt, image],#This makes the code send the user's image and our prompt to Gemini
@@ -79,6 +86,8 @@ if ("inventory" not in st.session_state):
 #Section 4:Entering Item By Hand-In Sidebar
 
 st.sidebar.title("⚙️ Settings") #This tells streamlit(makes our UI) to include a sidebar in our web app
+
+#Section 4a/Header 1-Manual Item Entering
 st.sidebar.header("➕ Add Item") 
 handName=st.sidebar.text_input("Enter Item Name Here: ")
 handEmoji=st.sidebar.text_input("Emoji",value="🍽️")
@@ -93,6 +102,11 @@ if (st.sidebar.button("Add Item Manually")):
         st.session_state["inventory"].append(addItem)#Makes sure that the item the user added goes in their account and stays in their account
         st.sidebar.success("Added " + handName + " successfully!")
 
+
+#Section 4b/Header 2-Limit/Goal Settings
+st.sidebar.header("🎯 Nutrion Limits/Goals")
+
+carbs
 
 
 
