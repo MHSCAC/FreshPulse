@@ -129,13 +129,13 @@ st.sidebar.header("🎯 Nutrion Limits/Goals")
 #Option for user to allow certain food trackers
 #They have to check the box if they want to track a specific macro
 #Must choose at least a gram-Future plans is to add other unit of measurement
-carbstracker=st.sidebar.checker("Track Carbohydrates?", value=True)
+carbstracker=st.sidebar.checkbox("Track Carbohydrates?", value=True)
 carbslimit=st.sidebar.number_input("Carb Goal/Limit(grams)", min_value=1, value=250) if carbstracker else 0
-proteintracker=st.sidebar.checker("Track Protein?", value=True)
+proteintracker=st.sidebar.checkbox("Track Protein?", value=True)
 proteingoal=st.sidebar.number_input("Protein Goal (grams)", min_value=1, value=100) if proteintracker else 0
-fattracker=st.sidebar.checker("Fat Tracker?", value=True)
+fattracker=st.sidebar.checkbox("Fat Tracker?", value=True)
 fatlimit=st.sidebar.number_input("Fat Limit/Goal(grams)", min_value=1, value=50) if fattracker else 0
-sodiumtracker=st.sidebar.checker("Sodium Tracker?", value=True)
+sodiumtracker=st.sidebar.checkbox("Sodium Tracker?", value=True)
 sodiumlimit=st.sidebar.number_input("Sodium Limit/Goal (grams)", min_value=1, value=50) if sodiumtracker else 0
 
 
