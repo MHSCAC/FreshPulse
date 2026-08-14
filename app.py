@@ -1,9 +1,7 @@
 
 #Section 1:Tools/Packages for web app
 
-
-
-#This allows us to import the tools needed for our app, like gen ai from google allows us to use Gemini for image processing, streamlit allows us to build our ferontend using only python, etc."
+#This allows us to import the tools needed for our app, so basically like gen ai from google allows us to use Gemini for image processing, streamlit allows us to build our ferontend using only python, etc."
 import math
 import random
 #Streamlit==st, easier to write st rather that streamlit every time
@@ -66,6 +64,29 @@ def aircpt(image):
     cleanText = response.text.replace("```json", "").replace("```", "").strip()
     return json.loads(cleanText)#This returns and makes the java text that Gemini gives us into python text, so the web app can read and use it.
 
+#Section 2b: Rings for Macro Stats-Did use AI for this part, way too complicated for me
+def create_ring_svg(label, current, goal, unit, color):
+    percent = min(100, int((current / goal) * 100)) if goal > 0 else 0
+    # SVG circle circumference math (r=36 -> C ≈ 226)
+    dashoffset = 226 - (226 * percent / 100)
+    
+    return f"""
+    <div style="text-align: center; margin: 10px;">
+        <svg width="100" height="100" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="36" stroke="#e6e6e6" stroke-width="8" fill="none"/>
+            <circle cx="50" cy="50" r="36" stroke="{color}" stroke-width="8" fill="none"
+                    stroke-dasharray="226" stroke-dashoffset="{dashoffset}"
+                    stroke-linecap="round" transform="rotate(-90 50 50)"/>
+            <text x="50%" y="45%" text-anchor="middle" font-size="14px" font-weight="bold" fill="#333">{percent}%</text>
+            <text x="50%" y="62%" text-anchor="middle" font-size="9px" fill="#666">{int(current)}{unit}</text>
+        </svg>
+        <div style="font-weight: bold; font-size: 14px; margin-top: 2px;">{label}</div>
+        <div style="font-size: 11px; color: #777;">Goal: {goal}{unit}</div>
+    </div>
+    """
+
+st.markdown("### 🎯 Your Daily Nutrition Rings (Eaten Progress)")
+
 
 
 
@@ -76,9 +97,9 @@ def aircpt(image):
 if ("inventory" not in st.session_state):
     st.session_state.inventory=[]
 
-
-
-
+#Makes sure that the app remembers the user's total, protein, fat, sodium, and carb goal/limits.
+if ("macros" not in st.session_state):
+    st.session_state.macros=[]
 
 
 
@@ -101,15 +122,21 @@ if (st.sidebar.button("Add Item Manually")):
               "Expires":datetime.date.today()+datetime.timedelta(days=handDays)}
         st.session_state["inventory"].append(addItem)#Makes sure that the item the user added goes in their account and stays in their account
         st.sidebar.success("Added " + handName + " successfully!")
-
+st.sidebar.divider()
 
 #Section 4b/Header 2-Limit/Goal Settings
 st.sidebar.header("🎯 Nutrion Limits/Goals")
-
-carbs
-
-
-
+#Option for user to allow certain food trackers
+#They have to check the box if they want to track a specific macro
+#Must choose at least a gram-Future plans is to add other unit of measurement
+carbstracker=st.sidebar.checker("Track Carbohydrates?", value=True)
+carbslimit=st.sidebar.number_input("Carb Goal/Limit(grams)", min_value=1, value=250) if carbstracker else 0
+proteintracker=st.sidebar.checker("Track Protein?", value=True)
+proteingoal=st.sidebar.number_input("Protein Goal (grams)", min_value=1, value=100) if proteintracker else 0
+fattracker=st.sidebar.checker("Fat Tracker?", value=True)
+fatlimit=st.sidebar.number_input("Fat Limit/Goal(grams)", min_value=1, value=50) if fattracker else 0
+sodiumtracker=st.sidebar.checker("Sodium Tracker?", value=True)
+sodiumlimit=st.sidebar.number_input("Sodium Limit/Goal (grams)", min_value=1, value=50) if sodiumtracker else 0
 
 
 
@@ -122,6 +149,40 @@ carbs
 
 st.title("🥗 FreshPulse")#THIS IS THE NAME OF THE APP-REMEMBER TO ASK AARNAV IF HE WANTS TO CHANGE IT
 st.write("Keep Track of Your Food to Help Stop Grocery Waste!")
+
+eatenCarbs = sum(item.get("Carbs", 0) for item in st.session_state["macros"])
+eatenProtein = sum(item.get("Protein", 0) for item in st.session_state["macros"])
+eatenFat = sum(item.get("Fat", 0) for item in st.session_state["macros"])
+eatenSodium = sum(item.get("Sodium", 0) for item in st.session_state["macros"])
+
+# Display active goal rings in columns-Used AI for this part connected to Rings Function(2b)
+st.markdown("### 🎯 Your Daily Nutrition Rings (Eaten Progress)")
+
+cols = st.columns(4)
+active_idx = 0
+
+if carbstracker and active_idx < 4:
+    with cols[active_idx]:
+        st.markdown(create_ring_svg("Carbs", eatenCarbs, carbslimit, "g", "#FF4B4B"), unsafe_allow_html=True)
+    active_idx += 1
+
+if proteintracker and active_idx < 4:
+    with cols[active_idx]:
+        st.markdown(create_ring_svg("Protein", eatenProtein, proteingoal, "g", "#00C04D"), unsafe_allow_html=True)
+    active_idx += 1
+
+if fattracker and active_idx < 4:
+    with cols[active_idx]:
+        st.markdown(create_ring_svg("Fat", eatenFat, fatlimit, "g", "#FFA500"), unsafe_allow_html=True)
+    active_idx += 1
+
+if (sodiumtracker and active_idx < 4):
+    with cols[active_idx]:
+        st.markdown(create_ring_svg("Sodium", eatenSodium, sodiumlimit, "mg", "#29B6F6"), unsafe_allow_html=True)
+    active_idx += 1
+
+st.divider()
+
 types={"png", "jpg", "jpeg"}
 fileUpload=st.file_uploader("Enter A Pic of your Grocery Receipt or List Here:", type=types)
 analyzeBtn=st.button("🔍 Analyze With AI")#Button that allows user to analyze
@@ -132,11 +193,16 @@ if(fileUpload and analyzeBtn): #Makes the uplaoding file part and pressing the b
         prcsdItems = aircpt(img)
     for item in prcsdItems: #Item is named here, code checks over each item AI proccessed one at a time
         life=int(item.get("life",6))#Defaults to 6 if AI doesn't give a item shelf life-IMPORTANT TO CHECK-Remember
-        st.session_state["inventory"].append({#This statement of code takes in the life variable righ above,  the item variable(each item AI processed), and the life of each item which the AI returned as "life"
+        st.session_state["inventory"].append(
+        { #This statement of code takes in the life variable righ above,  the item variable(each item AI processed), and the life of each item which the AI returned as "life"
             "Name": item.get("name", "Unknown"),
             "Emoji": item.get("emoji", "🍽️"),
             "Date Added": datetime.date.today(),
-            "Expires": datetime.date.today()+datetime.timedelta(days=life)
+            "Expires": datetime.date.today()+datetime.timedelta(days=life),
+            "Carbs": float(item.get("carbs",0)),
+            "Protein": float(item.get("protein",0)),
+            "Fat": float(item.get("fat",0)),
+            "Sodium":float(item.get("sodium",0))
         })
     st.success("Items Extracted and Saved Successfully") #What should be outputted is the name, emoji, and remaining life of each item the user had on their receipt/list in a organized way
 
@@ -146,7 +212,44 @@ if(fileUpload and analyzeBtn): #Makes the uplaoding file part and pressing the b
 
 #The purpose of this part of the code is to provide the user with the stats of 
 #their food, grouping of their food, notifications about their food, and their inventory.
+if(len(st.session_state["inventory"])>0):
+    st.header("Your Nutritional Summary:")
+    ttlcarbs=sum(item.get("Carbs", 0) for item in st.session_state["inventory"]) #Gets each item, pulls each item's carbs stats from inventory list, and adds them to one big sum, does same thing for every other macro sum
+    ttlprotein=sum(item.get("Protein", 0) for item in st.session_state["inventory"])
+    ttlfat=sum(item.get("Fat", 0) for item in st.session_state["inventory"])
+    ttlsodium=sum(item.get("Sodium", 0) for item in st.session_state["inventory"])
 
+    m_col1, m_col2, m_col3, m_col4=st.columns(4)
+
+    if(carbstracker):
+        with m_col1:
+            st.metrics("Carbs", f"{ttlcarbs:.1f}g/{carbslimit}g") #.1fg rounds decimal place to the tenth, ASK FOR USER WANTS WITH THIS ONE
+            st.progress(min(1.0, ttlcarbs / carbslimit) if carbslimit > 0 else 0.0) #Purpose of this is to find out if the user has reached their carb limit or not
+            if(ttlcarbs>carbslimit):
+                st.error("Carb Limit Reached! Come on Bro")
+
+    if(proteintracker):
+        with m_col2:
+            st.metrics("Protein", f"{ttlprotein:.1f}g/{proteingoal}g")
+            st.progress(min(1.0, ttlprotein/proteingoal) if proteingoal>0 else 0.0) # the if statement makes sure that if the user never check marked the goals or tracker, then no error would occur
+            if (ttlprotein>proteingoal):
+                st.success("Protein Goal Hit! Yessir")#Maybe make the phrases and bad phrases random?
+
+    if(fattracker):
+        with m_col3:
+            st.metrics("Fat",f"{ttlfat:.1f}g/{fatlimit}g" )
+            st.progress(min(1.0,ttlfat/fatlimit) if fatlimit>0 else 0.0)
+            if(ttlfat>fatlimit):
+                st.error("Fat Limit Hit! Are We Serious?") #Make random phrases in a list which index pos is picked at random and then added?
+
+    if(sodiumtracker):
+        with m_col4:
+            st.metrics("Sodium", f"{ttlsodium}g/{sodiumlimit}g")
+            st.progress(min(1.0,ttlsodium/sodiumlimit) if sodiumlimit>0 else 0.0)
+            if(ttlsodium>sodiumlimit):
+                st.error("You Reached Your Sodium Limit! Come On")
+
+st.divider()
 st.header("🛒 Your Grocery Cart")
 today=datetime.date.today()#Expiration Date-Today's Date will equal the countdown time, that is why we need to add this line, IMPORTANT
 if (len(st.session_state["inventory"])<1):
@@ -174,11 +277,22 @@ else:
         with col1:
             st.markdown(f"{item['Emoji']} {item['Name']}")
             st.write(f"Status: **{status}** | Expires On: **{dateFormat}**")
+            #Nutrional Facts Dropdown Menu/Bar
+            with st.expander("Nutrition Facts/Detials"): #Creates That dropdown thing you can click which drops down a tab for each item with its macro stats
+                n_col1, n_col2=st.columns(2)
+                with n_col1:
+                    st.write(f"*Carbs* {item.get('Carbs', 0)}g") #Defaults to 0 if AI didn't process or user didn't check
+                    st.write(f"*Protein* {item.get('Protein',0)}g")
+                with n_col2:
+                    st.write(f"*Fat* {item.get('Protein', 0)}g")
+                    st.write(f"*Sodium* {item.get('Sodium',0)}g")
             #If the item's lifetime is still greater than 0, so if it didn't expire yet and if the item did get the warning message, then the user will get a warning notification
             if(remainLife>0 and remainLife<=warning):
                 st.warning(f"⚠️ ACTION NEEDED! Use, cook, or eat {item['Name']} within {remainLife} days!")
         with col2:
             if (st.button("Mark as Eaten", key=f"btn_{index}")):
-                #If the User clicks the "Mark As Eaten" button, then that item they marked as eaten, will get out of their inventory and dashboard
-                st.session_state["inventory"].pop(index)
+                #If the User clicks the "Mark As Eaten" button, then that item they marked as eaten will affect their macro goals/limits and also get out of their inventory
+                #Remember to pop before apend, appending before popping will mess up index pos
+                eaten=st.session_state["inventory"].pop(index)#Takes index position to delwte related item in list
+                st.session_state["macros"].append(eaten)
                 st.rerun()
