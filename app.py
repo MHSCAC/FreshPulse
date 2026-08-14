@@ -85,8 +85,6 @@ def create_ring_svg(label, current, goal, unit, color):
     </div>
     """
 
-st.markdown("### 🎯 Your Daily Nutrition Rings (Eaten Progress)")
-
 
 
 
