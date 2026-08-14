@@ -221,28 +221,28 @@ if(len(st.session_state["inventory"])>0):
 
     if(carbstracker):
         with m_col1:
-            st.metrics("Carbs", f"{ttlcarbs:.1f}g/{carbslimit}g") #.1fg rounds decimal place to the tenth, ASK FOR USER WANTS WITH THIS ONE
+            st.metric("Carbs", f"{ttlcarbs:.1f}g/{carbslimit}g") #.1fg rounds decimal place to the tenth, ASK FOR USER WANTS WITH THIS ONE
             st.progress(min(1.0, ttlcarbs / carbslimit) if carbslimit > 0 else 0.0) #Purpose of this is to find out if the user has reached their carb limit or not
             if(ttlcarbs>carbslimit):
                 st.error("Carb Limit Reached! Come on Bro")
 
     if(proteintracker):
         with m_col2:
-            st.metrics("Protein", f"{ttlprotein:.1f}g/{proteingoal}g")
+            st.metric("Protein", f"{ttlprotein:.1f}g/{proteingoal}g")
             st.progress(min(1.0, ttlprotein/proteingoal) if proteingoal>0 else 0.0) # the if statement makes sure that if the user never check marked the goals or tracker, then no error would occur
             if (ttlprotein>proteingoal):
                 st.success("Protein Goal Hit! Yessir")#Maybe make the phrases and bad phrases random?
 
     if(fattracker):
         with m_col3:
-            st.metrics("Fat",f"{ttlfat:.1f}g/{fatlimit}g" )
+            st.metric("Fat",f"{ttlfat:.1f}g/{fatlimit}g" )
             st.progress(min(1.0,ttlfat/fatlimit) if fatlimit>0 else 0.0)
             if(ttlfat>fatlimit):
                 st.error("Fat Limit Hit! Are We Serious?") #Make random phrases in a list which index pos is picked at random and then added?
 
     if(sodiumtracker):
         with m_col4:
-            st.metrics("Sodium", f"{ttlsodium}g/{sodiumlimit}g")
+            st.metric("Sodium", f"{ttlsodium}g/{sodiumlimit}g")
             st.progress(min(1.0,ttlsodium/sodiumlimit) if sodiumlimit>0 else 0.0)
             if(ttlsodium>sodiumlimit):
                 st.error("You Reached Your Sodium Limit! Come On")
