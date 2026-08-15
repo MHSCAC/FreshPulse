@@ -209,6 +209,7 @@ if(fileUpload and analyzeBtn): #Makes the uplaoding file part and pressing the b
         { #This statement of code takes in the life variable righ above,  the item variable(each item AI processed), and the life of each item which the AI returned as "life"
             "Name": item.get("name", "Unknown"),
             "Emoji": item.get("emoji", "🍽️"),
+            "Serving": item.get("serving", "1 serving"),
             "Date Added": datetime.date.today(),
             "Expires": datetime.date.today()+datetime.timedelta(days=life),
             "Carbs": float(item.get("carbs",0)),
@@ -291,6 +292,9 @@ else:
             st.write(f"Status: **{status}** | Expires On: **{dateFormat}**")
             #Nutrional Facts Dropdown Menu/Bar
             with st.expander("Nutrition Facts/Detials"): #Creates That dropdown thing you can click which drops down a tab for each item with its macro stats
+
+                st.caption(f"📏 **Serving Size:** {item.get('Serving', '1 serving')}")
+
                 n_col1, n_col2=st.columns(2)
                 with n_col1:
                     st.write(f"*Carbs* {item.get('Carbs', 0)}g") #Defaults to 0 if AI didn't process or user didn't check
