@@ -13,6 +13,7 @@ import datetime
 from PIL import Image
 import json
 from google import genai
+from google.genai import types #Keep this import line, significance is that wihtout types, data formatting won't work with gemini model
 
 #Prevent Accidental Refreshes and To Alert User
 
