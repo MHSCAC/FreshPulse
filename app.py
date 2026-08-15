@@ -123,7 +123,7 @@ if (st.sidebar.button("Add Item Manually")):
 st.sidebar.divider()
 
 #Section 4b/Header 2-Limit/Goal Settings
-st.sidebar.header("🎯 Nutrion Limits/Goals")
+st.sidebar.header("🎯 Nutrition Limits/Goals")
 #Option for user to allow certain food trackers
 #They have to check the box if they want to track a specific macro
 #Must choose at least a gram-Future plans is to add other unit of measurement
@@ -211,7 +211,7 @@ if(fileUpload and analyzeBtn): #Makes the uplaoding file part and pressing the b
 #The purpose of this part of the code is to provide the user with the stats of 
 #their food, grouping of their food, notifications about their food, and their inventory.
 if(len(st.session_state["inventory"])>0):
-    st.header("Your Nutritional Summary:")
+    st.header("Your Cart's Nutritional Summary:") #Purpose is to show user the total stats of all macros for each item in the user's inventory
     ttlcarbs=sum(item.get("Carbs", 0) for item in st.session_state["inventory"]) #Gets each item, pulls each item's carbs stats from inventory list, and adds them to one big sum, does same thing for every other macro sum
     ttlprotein=sum(item.get("Protein", 0) for item in st.session_state["inventory"])
     ttlfat=sum(item.get("Fat", 0) for item in st.session_state["inventory"])
@@ -221,28 +221,28 @@ if(len(st.session_state["inventory"])>0):
 
     if(carbstracker):
         with m_col1:
-            st.metric("Carbs", f"{ttlcarbs:.1f}g/{carbslimit}g") #.1fg rounds decimal place to the tenth, ASK FOR USER WANTS WITH THIS ONE
+            st.metric("Carbs", f"{ttlcarbs:.1f}g", f"Goal/Limit:{carbslimit}g") #.1fg rounds decimal place to the tenth, ASK FOR USER WANTS WITH THIS ONE
             st.progress(min(1.0, ttlcarbs / carbslimit) if carbslimit > 0 else 0.0) #Purpose of this is to find out if the user has reached their carb limit or not
             if(ttlcarbs>carbslimit):
                 st.error("Carb Limit Reached! Come on Bro")
 
     if(proteintracker):
         with m_col2:
-            st.metric("Protein", f"{ttlprotein:.1f}g/{proteingoal}g")
+            st.metric("Protein", f"{ttlprotein:.1f}g", f"Goal/Limit:{proteingoal}g")
             st.progress(min(1.0, ttlprotein/proteingoal) if proteingoal>0 else 0.0) # the if statement makes sure that if the user never check marked the goals or tracker, then no error would occur
             if (ttlprotein>proteingoal):
                 st.success("Protein Goal Hit! Yessir")#Maybe make the phrases and bad phrases random?
 
     if(fattracker):
         with m_col3:
-            st.metric("Fat",f"{ttlfat:.1f}g/{fatlimit}g" )
+            st.metric("Fat",f"{ttlfat:.1f}g" f"Goal/Limit:{fatlimit}g" )
             st.progress(min(1.0,ttlfat/fatlimit) if fatlimit>0 else 0.0)
             if(ttlfat>fatlimit):
                 st.error("Fat Limit Hit! Are We Serious?") #Make random phrases in a list which index pos is picked at random and then added?
 
     if(sodiumtracker):
         with m_col4:
-            st.metric("Sodium", f"{ttlsodium}g/{sodiumlimit}g")
+            st.metric("Sodium", f"{ttlsodium}g",f"Goal/Limit: {sodiumlimit}g")
             st.progress(min(1.0,ttlsodium/sodiumlimit) if sodiumlimit>0 else 0.0)
             if(ttlsodium>sodiumlimit):
                 st.error("You Reached Your Sodium Limit! Come On")
