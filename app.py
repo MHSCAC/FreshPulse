@@ -49,12 +49,21 @@ def aircpt(image):
     client=genai.Client(api_key=apikey) #variable is basically a messenger which allows the web app to communicate with google AI
     #I did ask AI to create the prompt. My wording is kind of messy and confusing, so I told AI what I wanted the prompt to say and then the AI fixed and created the more neat prompt. Also figured that since this prmpt is for AI, then AI should prob creat the prompt
     aiprompt = (
-    "Analyze this grocery receipt image. Extract all food items considering brand names when available. "
-        "For each item, estimate/extract: item name, emoji, shelf life in days (integer), "
-        "carbohydrates in grams (number), protein in grams (number), fat in grams (number), "
-        "and sodium in milligrams (number). "
-        "Return ONLY a JSON list with keys: 'name', 'emoji', 'life', 'carbs', 'protein', 'fat', 'sodium'."
-)    
+        "Analyze this grocery receipt image. Extract all food items, considering brand names when available. "
+        "For each item, estimate/extract the following: "
+        "item name, emoji, and shelf life in days (integer). "
+        "Provide nutrition values PER ONE STANDARD SERVING of that item, choosing the serving unit that fits the food type: "
+        "for solid foods use one typical portion or 100 grams; "
+        "for liquids (milk, juice, soda, etc.) use 1 cup (240 mL); "
+        "for countable items (eggs, bananas, sausage links, slices of bread) use 1 piece/unit. "
+        "For that one serving, give: carbohydrates in grams (number), protein in grams (number), "
+        "fat in grams (number), and sodium in milligrams (number). "
+        "Also include a short 'serving' description of the serving size you assumed (for example '1 link', '1 cup', '100g', '1 egg'). "
+        "Return ONLY a JSON list where each item has these keys: "
+        "'name', 'emoji', 'life', 'serving', 'carbs', 'protein', 'fat', 'sodium'."
+    )
+
+ 
     #Basically asked AI to give the app the item name, a deisgnated emoji, a lifetime, the carbs, the protein, the fat, and sodium, of each item on the user's receipt
     try:
         response = client.models.generate_content(
