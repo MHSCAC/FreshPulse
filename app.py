@@ -250,7 +250,7 @@ if(len(st.session_state["inventory"])>0):
 
     if(fattracker):
         with m_col3:
-            st.metric("Fat",f"{ttlfat:.1f}g" f"Goal/Limit:{fatlimit}g" )
+            st.metric("Fat",f"{ttlfat:.1f}g", f"Goal/Limit:{fatlimit}g" ) #Not incluidng commas will show Goal/Limit on columns
             st.progress(min(1.0,ttlfat/fatlimit) if fatlimit>0 else 0.0)
             if(ttlfat>fatlimit):
                 st.error("Fat Limit Hit! Are We Serious?") #Make random phrases in a list which index pos is picked at random and then added?
