@@ -1,0 +1,6 @@
+#***Used AI to fix this error***
+#The purpose of this file is to fix streamlit error and google sdk with python verison
+#Google's SDK and Streamlit browser isn't sutied with python version 3.14
+#This file will make it so that it forces Streamlit and Google SDK to work with 3.11 version instead of 3.14 but I still write with 3.14 version
+
+python-3.11
