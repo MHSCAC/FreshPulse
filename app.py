@@ -50,20 +50,24 @@ def aircpt(image):
     #I did ask AI to create the prompt. My wording is kind of messy and confusing, so I told AI what I wanted the prompt to say and then the AI fixed and created the more neat prompt. Also figured that since this prmpt is for AI, then AI should prob creat the prompt
     aiprompt = (
     "Analyze this grocery receipt image. Extract all food items considering brand names when available. "
-    "For each item, estimate/extract: item name, emoji, shelf life in days (integer), "
-    "carbohydrates in grams (number), protein in grams (number), fat in grams (number), "
-    "and sodium in milligrams (number). "
-    "Return ONLY a JSON list with keys: 'name', 'emoji', 'life', 'carbs', 'protein', 'fat', 'sodium'."
-    #Basically asked AI to give the app the item name, a deisgnated emoji, a lifetime, the carbs, the protein, the fat, and sodium, of each item on the user's receipt
+        "For each item, estimate/extract: item name, emoji, shelf life in days (integer), "
+        "carbohydrates in grams (number), protein in grams (number), fat in grams (number), "
+        "and sodium in milligrams (number). "
+        "Return ONLY a JSON list with keys: 'name', 'emoji', 'life', 'carbs', 'protein', 'fat', 'sodium'."
 )    
-    response = client.models.generate_content(
-    model='gemini-1.5-flash', #Cant use 2.5 flash, google retired it for new users
-    contents=[aiprompt, image],#This makes the code send the user's image and our prompt to Gemini
-    config=types.GenerateContentConfig(response_mime_type="application/json")
-)
-    #CleanText Function will break if everything is not in one line, adding lines will overide and revert back to the original text given by the AI
-    cleanText = response.text.replace("```json", "").replace("```", "").strip()
-    return json.loads(cleanText)#This returns and makes the java text that Gemini gives us into python text, so the web app can read and use it.
+    #Basically asked AI to give the app the item name, a deisgnated emoji, a lifetime, the carbs, the protein, the fat, and sodium, of each item on the user's receipt
+    try:
+        response = client.models.generate_content(
+        model='gemini-2.0-flash', #Cant use 2.5 flash, google retired it for new users
+        contents=[image,aiprompt],#This makes the code send the user's image and our prompt to Gemini
+config=types.GenerateContentConfig(response_mime_type="application/json")
+        )
+        #CleanText Function will break if everything is not in one line, adding lines will overide and revert back to the original text given by the AI
+        cleanText = response.text.replace("```json", "").replace("```", "").strip()
+        return json.loads(cleanText)#This returns and makes the java text that Gemini gives us into python text, so the web app can read and use it.
+    except Exception as e:
+            st.error(f"Error Processing Receipt:{e}")
+            return []
 
 #Section 2b: Rings for Macro Stats-Did use AI for this part, way too complicated for me
 def create_ring_svg(label, current, goal, unit, color):
@@ -186,7 +190,7 @@ allowedtypes={"png", "jpg", "jpeg"}
 fileUpload=st.file_uploader("Enter A Pic of your Grocery Receipt or List Here:", type=allowedtypes)
 analyzeBtn=st.button("🔍 Analyze With AI")#Button that allows user to analyze
 if(fileUpload and analyzeBtn): #Makes the uplaoding file part and pressing the button part requried for the user to analyze their reciept or list
-    img=Image.open(fileUpload)
+    img=Image.open(fileUpload).convert("RGB")
     #The next lines we used AI help for because we needed to pass the image to AI for the Gemini to analyze it-We have never done this before
     with st.spinner("AI Is Processing Your Image"):#Loading Screen
         prcsdItems = aircpt(img)
