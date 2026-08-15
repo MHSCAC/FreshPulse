@@ -58,7 +58,7 @@ def aircpt(image):
     #Basically asked AI to give the app the item name, a deisgnated emoji, a lifetime, the carbs, the protein, the fat, and sodium, of each item on the user's receipt
     try:
         response = client.models.generate_content(
-        model='gemini-2.5-flash', #Cant use 2.5 flash, google retired it for new users
+        model='gemini-1.5-flash', #Cant use 2.5 flash, google retired it for new users
         contents=[image,aiprompt],#This makes the code send the user's image and our prompt to Gemini
 config=types.GenerateContentConfig(response_mime_type="application/json")
         )
@@ -66,8 +66,8 @@ config=types.GenerateContentConfig(response_mime_type="application/json")
         cleanText = response.text.replace("```json", "").replace("```", "").strip()
         return json.loads(cleanText)#This returns and makes the java text that Gemini gives us into python text, so the web app can read and use it.
     except Exception as e:
-            st.error(f"Error Processing Receipt:{e}")
-            return []
+        st.error(f"Error Processing Receipt:{e}")
+        return []
 
 #Section 2b: Rings for Macro Stats-Did use AI for this part, way too complicated for me
 def create_ring_svg(label, current, goal, unit, color):
