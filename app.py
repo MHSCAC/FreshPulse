@@ -182,8 +182,8 @@ if (sodiumtracker and active_idx < 4):
 
 st.divider()
 
-types={"png", "jpg", "jpeg"}
-fileUpload=st.file_uploader("Enter A Pic of your Grocery Receipt or List Here:", type=types)
+allowedtypes={"png", "jpg", "jpeg"}
+fileUpload=st.file_uploader("Enter A Pic of your Grocery Receipt or List Here:", type=allowedtypes)
 analyzeBtn=st.button("🔍 Analyze With AI")#Button that allows user to analyze
 if(fileUpload and analyzeBtn): #Makes the uplaoding file part and pressing the button part requried for the user to analyze their reciept or list
     img=Image.open(fileUpload)
