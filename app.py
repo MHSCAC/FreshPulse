@@ -58,8 +58,8 @@ def aircpt(image):
     #Basically asked AI to give the app the item name, a deisgnated emoji, a lifetime, the carbs, the protein, the fat, and sodium, of each item on the user's receipt
     try:
         response = client.models.generate_content(
-        model='gemini-flash', #Cant use 2.5 flash, google retired it for new users
-        contents=[image,aiprompt],#This makes the code send the user's image and our prompt to Gemini
+        model='gemini-2.5-flash', #Cant use 2.5 flash, google retired it for new users
+        contents=[aiprompt,image],#This makes the code send the user's image and our prompt to Gemini
 config=types.GenerateContentConfig(response_mime_type="application/json")
         )
         #CleanText Function will break if everything is not in one line, adding lines will overide and revert back to the original text given by the AI
