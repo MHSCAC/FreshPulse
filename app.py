@@ -14,6 +14,8 @@ from PIL import Image
 import json
 from google import genai
 from google.genai import types #Keep this import line, significance is that wihtout types, data formatting won't work with gemini model
+import os
+
 
 #Prevent Accidental Refreshes and To Alert User
 
@@ -42,7 +44,7 @@ components.html(
 
 #We did use AI to help us to code this part. We have never used API keys or imported AI in a web app before, so we got AI to teach us how to code something like that.
 def aircpt(image):
-    apikey = st.secrets.get("geminiApiKey")
+    apikey = os.environ.get("geminiApiKey")
     if not apikey:
         st.error("Missing geminiApiKey in Streamlit Secrets!")
         return []
