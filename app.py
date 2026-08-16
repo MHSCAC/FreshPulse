@@ -310,7 +310,7 @@ else:
                     st.write(f"*Protein* {item.get('Protein',0)}g")
                 with n_col2:
                     st.write(f"*Fat* {item.get('Fat', 0)}g")
-                    st.write(f"*Sodium* {item.get('Sodium',0)}g")
+                    st.write(f"*Sodium* {item.get('Sodium',0)}mg")
             #If the item's lifetime is still greater than 0, so if it didn't expire yet and if the item did get the warning message, then the user will get a warning notification
             if(remainLife>0 and remainLife<=warning):
                 st.warning(f"⚠️ ACTION NEEDED! Use, cook, or eat {item['Name']} within {remainLife} days!")
