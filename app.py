@@ -113,6 +113,15 @@ if ("inventory" not in st.session_state):
 if ("macros" not in st.session_state):
     st.session_state.macros=[]
 
+#Sees the last day the macros were reset
+if "resetDate" not in st.session_state:
+    st.session_state["resetDate"]=datetime.date.today()
+
+#If the app sees that the macros were never updated today, then it will reset the macros, then make the last reset date show to the day it just reset
+if st.session_state["resetDate"]<datetime.date.today():
+    st.session_state["macros"]=[]
+    st.session_state["resetDate"]=datetime.date.today()
+
 
 
 
@@ -137,7 +146,7 @@ if (st.sidebar.button("Add Item Manually")):
 st.sidebar.divider()
 
 #Section 4b/Header 2-Limit/Goal Settings
-st.sidebar.header("🎯 Nutrition Limits/Goals")
+st.sidebar.header("🎯 Daily Nutrition Limits/Goals")
 #Option for user to allow certain food trackers
 #They have to check the box if they want to track a specific macro
 #Must choose at least a gram-Future plans is to add other unit of measurement
@@ -148,7 +157,7 @@ proteingoal=st.sidebar.number_input("Protein Goal (grams)", min_value=1, value=1
 fattracker=st.sidebar.checkbox("Fat Tracker?", value=True)
 fatlimit=st.sidebar.number_input("Fat Limit/Goal(grams)", min_value=1, value=50) if fattracker else 0
 sodiumtracker=st.sidebar.checkbox("Sodium Tracker?", value=True)
-sodiumlimit=st.sidebar.number_input("Sodium Limit/Goal (grams)", min_value=1, value=50) if sodiumtracker else 0
+sodiumlimit=st.sidebar.number_input("Sodium Limit/Goal (milligrams)", min_value=1, value=50) if sodiumtracker else 0
 
 
 
@@ -250,14 +259,14 @@ if(len(st.session_state["inventory"])>0):
 
     if(fattracker):
         with m_col3:
-            st.metric("Fat",f"{ttlfat:.1f}g", f"Goal/Limit:{fatlimit}g" ) #Not incluidng commas will show Goal/Limit on columns
+            st.metric("Fat", f"{ttlfat:.1f}g", f"Goal/Limit:{fatlimit}g" ) #Not incluidng commas will show Goal/Limit on columns
             st.progress(min(1.0,ttlfat/fatlimit) if fatlimit>0 else 0.0)
             if(ttlfat>fatlimit):
                 st.error("Fat Limit Hit! Are We Serious?") #Make random phrases in a list which index pos is picked at random and then added?
 
     if(sodiumtracker):
         with m_col4:
-            st.metric("Sodium", f"{ttlsodium}g",f"Goal/Limit: {sodiumlimit}g")
+            st.metric("Sodium", f"{ttlsodium}mg",f"Goal/Limit: {sodiumlimit}mg")
             st.progress(min(1.0,ttlsodium/sodiumlimit) if sodiumlimit>0 else 0.0)
             if(ttlsodium>sodiumlimit):
                 st.error("You Reached Your Sodium Limit! Come On")
@@ -308,6 +317,10 @@ else:
         with col2:
             if (st.button("Mark as Eaten", key=f"btn_{index}")):
                 #If the User clicks the "Mark As Eaten" button, then that item they marked as eaten will affect their macro goals/limits and also get out of their inventory
+                #However, if the user marks things as eaten on the next day, it first activates the reset macros function before they can mark items as eaten, so the item doesn't go into the before day's macros
+                if st.session_state["resetDate"] < datetime.date.today():
+                    st.session_state["macros"] = []
+                    st.session_state["resetDate"] = datetime.date.today()
                 #Remember to pop before apend, appending before popping will mess up index pos
                 eaten=st.session_state["inventory"].pop(index)#Takes index position to delwte related item in list
                 st.session_state["macros"].append(eaten)
