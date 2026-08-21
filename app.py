@@ -105,19 +105,19 @@ def create_ring_svg(label, current, goal, unit, color):
 
 #Section 2c: User Barcoede Scanner Function
 def barcode(image):
-    apikey=st.secrets.get("geminiApiKey")
+    apikey=os.environ.get("geminiApiKey")
     #Also, if the key iisn't there, then the app will show an error message showing that the API key basicclly wasn't found, this is necessary so if a error pops up, then we can know if it was or wasn't the API key
     if not apikey:
         st.sidebar.error("Missing/Error with API Key")
-        return none
-    client=genai.client(api_key=apikey, http_options={'api_version': 'v1'})#-Used AI help with this part
+        return None
+    client=genai.Client(api_key=apikey, http_options={'api_version': 'v1'})#-Used AI help with this part
     bcprompt=(
         "Look closely at this image to find a barcode (UPC/EAN). "
         "Extract ONLY the raw digits of the barcode as a single string of numbers with no spaces or symbols. "
         "If no barcode is visible, return 'NONE'."
     )
     try:
-        response=client.model.generate_content(
+        response=client.models.generate_content(
         model='gemini-3.6-flash',
         contents=[bcprompt,image] 
     )
@@ -189,7 +189,7 @@ if barcodePicture and st.sidebar.button("🔍 Process Barcode Photo"): #If user 
     if (scannedBC):
         st.session_state["inventory"].append(scannedBC)
         st.sidebar.success(f"Added {scannedBC['Name']}")
-        st.rerun
+        st.rerun()
     else:
         st.sidebar.error("Couldn't properly scan the barcode, please try again later.")
 st.sidebar.divider()
