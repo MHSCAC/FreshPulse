@@ -9,6 +9,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 #datetime=python tool for tracking dates, in this case, expiration dates
 import datetime
+import requests
 #Allows AI to see and read the uploaded image from the user
 from PIL import Image
 import json
@@ -65,8 +66,8 @@ def aircpt(image):
         "'name', 'emoji', 'life', 'serving', 'carbs', 'protein', 'fat', 'sodium'."
     )
 
- 
     #Basically asked AI to give the app the item name, a deisgnated emoji, a lifetime, the carbs, the protein, the fat, and sodium, of each item on the user's receipt
+    
     try:
         response = client.models.generate_content(
         model='gemini-3.6-flash', #Cant use 2.5 flash, google retired it for new users
@@ -102,6 +103,49 @@ def create_ring_svg(label, current, goal, unit, color):
     """
 
 
+#Section 2c: User Barcoede Scanner Function
+def barcode(image):
+    apikey=st.secrets.get("geminiApiKey")
+    #Also, if the key iisn't there, then the app will show an error message showing that the API key basicclly wasn't found, this is necessary so if a error pops up, then we can know if it was or wasn't the API key
+    if not apikey:
+        st.sidebar.error("Missing/Error with API Key")
+        return none
+    client=genai.client(api_key=apikey, http_options={'api_version': 'v1'})#-Used AI help with this part
+    bcprompt=(
+        "Look closely at this image to find a barcode (UPC/EAN). "
+        "Extract ONLY the raw digits of the barcode as a single string of numbers with no spaces or symbols. "
+        "If no barcode is visible, return 'NONE'."
+    )
+    try:
+        response=client.model.generate_content(
+        model='gemini-3.6-flash',
+        contents=[bcprompt,image] 
+    )
+        barcodeNum=response.text.strip().replace(" ", "") #Don't need to stip backticks or spaces at front or end, not necessary for this one
+        if barcodeNum and barcodeNum.isdigit():
+            url=f"https://world.openfoodfacts.org/api/v2/product/{barcodeNum}.json" #Function of this-sends the barcode number that we cleaned from the ai, puts it into an API web that finds stats and macros of the barcode item that you put into it
+            res=requests.get(url,timeout=15).json()
+            if (res.get("status")==1): #If it does get the product and it equals 1 or true, then the if statement will run
+                product=res.get("product",{})
+                nutriments=product.get("nutriments",{})
+                name=product.get("product_name") or product.get("product_name_en") or "Scanned Product" #-Both names are missing, defaults to Scanned Product
+                brand=product.get("brands", "")
+                fullName = f"{brand} {name}".strip() if brand else name
+                #i made a dictionary so the app can just look into it, find everything and get it for the output-easier way
+                return {    #Did get AI to help imagine how the dictionary should be-Never used a dictionary before
+                    "Name": fullName,
+                    "Emoji": "📦",
+                    "Serving": product.get("serving_size", "1 serving"),
+                    "Date Added": datetime.date.today(),
+                    "Expires": datetime.date.today() + datetime.timedelta(days=7),
+                    "Carbs": float(nutriments.get("carbohydrates_100g", 0)),
+                    "Protein": float(nutriments.get("proteins_100g", 0)),
+                    "Fat": float(nutriments.get("fat_100g", 0)),
+                    "Sodium": float(nutriments.get("sodium_100g", 0)) * 1000
+                }
+    except Exception as e: #If the code can't do any of this, then it will show error message to user
+        st.sidebar.error(f"Error with the barcode scanner")
+    return None
 
 
 
@@ -127,24 +171,27 @@ if st.session_state["resetDate"]<datetime.date.today():
 
 
 
-#Section 4:Entering Item By Hand-In Sidebar
+#Section 4:Entering Item By Barcode Sidebar
 
 st.sidebar.title("⚙️ Settings") #This tells streamlit(makes our UI) to include a sidebar in our web app
 
-#Section 4a/Header 1-Manual Item Entering
-st.sidebar.header("➕ Add Item") 
-handName=st.sidebar.text_input("Enter Item Name Here: ")
-handEmoji=st.sidebar.text_input("Emoji",value="🍽️")
-handDays=st.sidebar.number_input("Item Life (in days): ", min_value=1)
-#Used AI for the date part. We never learnt how to get dates and what day it is in python.
-if (st.sidebar.button("Add Item Manually")):
-    if (handName and handDays): #Creates buttons and text boxes for user to add item by hand, and only also makes sure they don't forget to add the item's remaining lifetime and name
-        addItem={"Name":handName,
-              "Emoji":handEmoji,
-              "Date Added":datetime.date.today(),
-              "Expires":datetime.date.today()+datetime.timedelta(days=handDays)}
-        st.session_state["inventory"].append(addItem)#Makes sure that the item the user added goes in their account and stays in their account
-        st.sidebar.success("Added " + handName + " successfully!")
+#Section 4a/Header 1-Manual Item Entering-Now changed to Barcode Scanner
+st.sidebar.header("Scan your Barcode Here")
+allowedtypes={"png", "jpg", "jpeg"}
+barcodePicture=st.sidebar.file_uploader("Upload or Scan Barcode:", type=allowedtypes, key="barcode_uploader")
+if barcodePicture and st.sidebar.button("🔍 Process Barcode Photo"): #If user uploads and clicks button then this
+    barcodeImg=Image.open(barcodePicture)
+    with st.spinner("AI is Processing Your Image..."):
+        scannedBC=barcode(barcodeImg)
+    #Purpose of the next block-If scannedBC is true, then it will append the stats of the item to the inventory which allows the user to see the stats on their dashboard
+    #After, they also get a success message and the app also re-runs immediatley to update everything 
+    #However, if the program failed to scan the barcode due to some errors, user will get message saying that the program couldn't scan the barcode properly
+    if (scannedBC):
+        st.session_state["inventory"].append(scannedBC)
+        st.sidebar.success(f"Added {scannedBC['Name']}")
+        st.rerun
+    else:
+        st.sidebar.error("Couldn't properly scan the barcode, please try again later.")
 st.sidebar.divider()
 
 #Section 4b/Header 2-Limit/Goal Settings
@@ -206,7 +253,6 @@ if (sodiumtracker and active_idx < 4):
 
 st.divider()
 
-allowedtypes={"png", "jpg", "jpeg"}
 fileUpload=st.file_uploader("Enter A Pic of your Grocery Receipt or List Here:", type=allowedtypes)
 analyzeBtn=st.button("🔍 Analyze With AI")#Button that allows user to analyze
 if(fileUpload and analyzeBtn): #Makes the uplaoding file part and pressing the button part requried for the user to analyze their reciept or list
