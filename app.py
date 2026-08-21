@@ -110,7 +110,7 @@ def barcode(image):
     if not apikey:
         st.sidebar.error("Missing/Error with API Key")
         return None
-    client=genai.Client(api_key=apikey, http_options={'api_version': 'v1'})#-Used AI help with this part
+    client=genai.Client(api_key=apikey)#-Used AI help with this part
     bcprompt=(
         "Look closely at this image to find a barcode (UPC/EAN). "
         "Extract ONLY the raw digits of the barcode as a single string of numbers with no spaces or symbols. "
@@ -144,7 +144,7 @@ def barcode(image):
                     "Sodium": float(nutriments.get("sodium_100g", 0)) * 1000
                 }
     except Exception as e: #If the code can't do any of this, then it will show error message to user
-        st.sidebar.error(f"Error with the barcode scanner")
+        st.sidebar.error(f"Error with the barcode scanner: {e}")
     return None
 
 
