@@ -390,3 +390,6 @@ else:
                 eaten=st.session_state["inventory"].pop(index)#Takes index position to delwte related item in list
                 st.session_state["macros"].append(eaten)
                 st.rerun()
+
+st.divider()
+st.caption("Created By Sai Belde and Aarnav Vurputoor")
