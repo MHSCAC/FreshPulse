@@ -194,7 +194,23 @@ if barcodePicture and st.sidebar.button("🔍 Process Barcode Photo"): #If user 
         st.sidebar.error("Couldn't properly scan the barcode, please try again later.")
 st.sidebar.divider()
 
-#Section 4b/Header 2-Limit/Goal Settings
+#Section 4b/Header 2-Manual Item Entering
+st.sidebar.header("➕ Add Item") 
+handName=st.sidebar.text_input("Enter Item Name Here: ")
+handEmoji=st.sidebar.text_input("Emoji",value="🍽️")
+handDays=st.sidebar.number_input("Item Life (in days): ", min_value=1)
+#Used AI for the date part. We never learnt how to get dates and what day it is in python.
+if (st.sidebar.button("Add Item Manually")):
+    if (handName and handDays): #Creates buttons and text boxes for user to add item by hand, and only also makes sure they don't forget to add the item's remaining lifetime and name
+        addItem={"Name":handName,
+              "Emoji":handEmoji,
+              "Date Added":datetime.date.today(),
+              "Expires":datetime.date.today()+datetime.timedelta(days=handDays)}
+        st.session_state["inventory"].append(addItem)#Makes sure that the item the user added goes in their account and stays in their account
+        st.sidebar.success("Added " + handName + " successfully!")
+st.sidebar.divider()
+
+#Section 4c/Header 3-Limit/Goal Settings
 st.sidebar.header("🎯 Daily Nutrition Limits/Goals")
 #Option for user to allow certain food trackers
 #They have to check the box if they want to track a specific macro
