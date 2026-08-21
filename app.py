@@ -124,7 +124,8 @@ def barcode(image):
         barcodeNum=response.text.strip().replace(" ", "") #Don't need to stip backticks or spaces at front or end, not necessary for this one
         if barcodeNum and barcodeNum.isdigit():
             url=f"https://world.openfoodfacts.org/api/v2/product/{barcodeNum}.json" #Function of this-sends the barcode number that we cleaned from the ai, puts it into an API web that finds stats and macros of the barcode item that you put into it
-            res=requests.get(url,timeout=15).json()
+            calling={"User-Agent": "FreshPulse/1.0"} #When using the Open Food Facts API, the API needs to know who is using it, so we gave them our name "FreshPulse"
+            res=requests.get(url,timeout=15, headers=calling).json()
             if (res.get("status")==1): #If it does get the product and it equals 1 or true, then the if statement will run
                 product=res.get("product",{})
                 nutriments=product.get("nutriments",{})
