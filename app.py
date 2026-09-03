@@ -56,18 +56,18 @@ def get_gemini_client():
     return genai.Client(api_key=apikey)
 
 
-# Calculate Calorie & Macro Requirements using Mifflin-St Jeor Formula
+# Calculate Realistic Calorie & Macro Requirements
 def calculate_goals(age, weight_lbs, height_inches, gender, activity, goal):
     weight_kg = weight_lbs * 0.453592
     height_cm = height_inches * 2.54
 
-    # BMR Calculation
+    # BMR Calculation (Mifflin-St Jeor)
     if gender == "Male":
         bmr = (10 * weight_kg) + (6.25 * height_cm) - (5 * age) + 5
     else:
         bmr = (10 * weight_kg) + (6.25 * height_cm) - (5 * age) - 161
 
-    # Activity Multiplier
+    # Activity Multipliers
     act_mult = {
         "Sedentary": 1.2,
         "Lightly Active": 1.375,
@@ -76,24 +76,35 @@ def calculate_goals(age, weight_lbs, height_inches, gender, activity, goal):
     }
     tdee = bmr * act_mult.get(activity, 1.2)
 
-    # Goal Adjustment
+    # Calorie Adjustment Based on Goal
     if goal == "Lose Weight":
-        calories = tdee - 500
+        calories = max(1200, tdee - 500)
     elif goal == "Gain Muscle":
         calories = tdee + 300
     else:
         calories = tdee
 
-    # Macro distribution: ~30% Protein, 40% Carbs, 30% Fat
-    protein_g = (calories * 0.30) / 4
-    carbs_g = (calories * 0.40) / 4
-    fat_g = (calories * 0.30) / 9
+    # REALISTIC MACRO CALCULATIONS:
+    # 1. Protein based on weight: 0.8g to 1.0g per lb of body weight (Capped between 60g and 180g)
+    if goal == "Gain Muscle":
+        protein_g = min(180, max(60, weight_lbs * 1.0))
+    else:
+        protein_g = min(160, max(50, weight_lbs * 0.8))
+
+    # 2. Dietary Fat: ~25% to 30% of total daily calories (0.3g to 0.4g per lb)
+    fat_g = max(40, (calories * 0.25) / 9)
+
+    # 3. Carbohydrates: Fills remaining daily calorie allowance
+    protein_calories = protein_g * 4
+    fat_calories = fat_g * 9
+    remaining_calories = max(0, calories - (protein_calories + fat_calories))
+    carbs_g = max(50, remaining_calories / 4)
 
     return {
-        "calories": max(1200, int(calories)),
-        "protein": max(50, int(protein_g)),
-        "carbs": max(50, int(carbs_g)),
-        "fat": max(30, int(fat_g)),
+        "calories": int(calories),
+        "protein": int(protein_g),
+        "carbs": int(carbs_g),
+        "fat": int(fat_g),
     }
 
 
@@ -296,7 +307,7 @@ if st.sidebar.button("🚪 Log Out"):
     st.session_state.current_user = None
     st.rerun()
 
-# --- CLIENT-SIDE FORM: User Information ---
+# Client-Side Form: User Information
 st.sidebar.header("👤 Body & Goal Profile")
 
 with st.sidebar.form("profile_form"):
@@ -314,7 +325,6 @@ with st.sidebar.form("profile_form"):
         index=activity_options.index(user_prof.get("activity", "Moderately Active"))
     )
 
-    # Form Submit Button (Sends all inputs to server at once)
     profile_submitted = st.form_submit_button("💾 Save Profile & Update Goals")
 
 if profile_submitted:
@@ -329,7 +339,7 @@ if profile_submitted:
     st.sidebar.success("Profile saved and server goals updated!")
     st.rerun()
 
-# Determine goal type & dynamically compute new targets based on saved profile
+# Determine goal type & dynamically compute realistic targets based on saved profile
 if user_prof["goal_weight"] < user_prof["weight_lbs"]:
     goal_type = "Lose Weight"
 elif user_prof["goal_weight"] > user_prof["weight_lbs"]:
