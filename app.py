@@ -279,7 +279,7 @@ if not st.session_state.current_user:
             else:
                 st.error("Please enter both a username and password.")
 
-    st.stop()  # Stop execution here if user is not signed in
+    st.stop()
 
 # Sync user data to session state
 user = st.session_state.current_user
@@ -296,35 +296,55 @@ if st.sidebar.button("🚪 Log Out"):
     st.session_state.current_user = None
     st.rerun()
 
+# --- CLIENT-SIDE FORM: User Information ---
 st.sidebar.header("👤 Body & Goal Profile")
-age = st.sidebar.number_input("Age", min_value=10, max_value=120, value=int(user_prof["age"]))
-gender = st.sidebar.selectbox("Gender", ["Male", "Female"], index=0 if user_prof["gender"] == "Male" else 1)
-height_inches = st.sidebar.number_input("Height (inches)", min_value=36, max_value=96, value=int(user_prof["height_inches"]))
-weight_lbs = st.sidebar.number_input("Current Weight (lbs)", min_value=50, max_value=500, value=int(user_prof["weight_lbs"]))
-goal_weight = st.sidebar.number_input("Goal Weight (lbs)", min_value=50, max_value=500, value=int(user_prof["goal_weight"]))
 
-activity_options = ["Sedentary", "Lightly Active", "Moderately Active", "Very Active"]
-activity = st.sidebar.selectbox("Activity Level", activity_options, index=activity_options.index(user_prof.get("activity", "Moderately Active")))
+with st.sidebar.form("profile_form"):
+    st.write("Fill out your stats and save to send to server:")
+    age_input = st.number_input("Age", min_value=10, max_value=120, value=int(user_prof["age"]))
+    gender_input = st.selectbox("Gender", ["Male", "Female"], index=0 if user_prof["gender"] == "Male" else 1)
+    height_input = st.number_input("Height (inches)", min_value=36, max_value=96, value=int(user_prof["height_inches"]))
+    weight_input = st.number_input("Current Weight (lbs)", min_value=50, max_value=500, value=int(user_prof["weight_lbs"]))
+    goal_weight_input = st.number_input("Goal Weight (lbs)", min_value=50, max_value=500, value=int(user_prof["goal_weight"]))
 
-# Save updated profile parameters back to user state
-user_prof.update({
-    "age": age,
-    "gender": gender,
-    "height_inches": height_inches,
-    "weight_lbs": weight_lbs,
-    "goal_weight": goal_weight,
-    "activity": activity,
-})
+    activity_options = ["Sedentary", "Lightly Active", "Moderately Active", "Very Active"]
+    activity_input = st.selectbox(
+        "Activity Level",
+        activity_options,
+        index=activity_options.index(user_prof.get("activity", "Moderately Active"))
+    )
 
-# Determine goal type & dynamically compute new targets
-if goal_weight < weight_lbs:
+    # Form Submit Button (Sends all inputs to server at once)
+    profile_submitted = st.form_submit_button("💾 Save Profile & Update Goals")
+
+if profile_submitted:
+    user_prof.update({
+        "age": age_input,
+        "gender": gender_input,
+        "height_inches": height_input,
+        "weight_lbs": weight_input,
+        "goal_weight": goal_weight_input,
+        "activity": activity_input,
+    })
+    st.sidebar.success("Profile saved and server goals updated!")
+    st.rerun()
+
+# Determine goal type & dynamically compute new targets based on saved profile
+if user_prof["goal_weight"] < user_prof["weight_lbs"]:
     goal_type = "Lose Weight"
-elif goal_weight > weight_lbs:
+elif user_prof["goal_weight"] > user_prof["weight_lbs"]:
     goal_type = "Gain Muscle"
 else:
     goal_type = "Maintain Weight"
 
-calculated_goals = calculate_goals(age, weight_lbs, height_inches, gender, activity, goal_type)
+calculated_goals = calculate_goals(
+    user_prof["age"],
+    user_prof["weight_lbs"],
+    user_prof["height_inches"],
+    user_prof["gender"],
+    user_prof["activity"],
+    goal_type
+)
 
 st.sidebar.markdown(f"**Target Plan:** `{goal_type}`")
 st.sidebar.markdown(f"**Target Calories:** `{calculated_goals['calories']} kcal`")
