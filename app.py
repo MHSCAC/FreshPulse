@@ -23,19 +23,29 @@ components.html(
     height=0,
 )
 
-# Initialize Session States
-if "inventory" not in st.session_state:
-    st.session_state.inventory = []
+# ================= SESSION STATE & SIGN-IN MANAGEMENT =================
 
-if "macros" not in st.session_state:
-    st.session_state.macros = []
+# Store mock user accounts database in session state
+if "users_db" not in st.session_state:
+    st.session_state.users_db = {
+        "guest": {
+            "password": "guest",
+            "profile": {
+                "age": 25,
+                "gender": "Male",
+                "height_inches": 68,
+                "weight_lbs": 160,
+                "goal_weight": 150,
+                "activity": "Moderately Active",
+            },
+            "inventory": [],
+            "macros": [],
+            "resetDate": datetime.date.today(),
+        }
+    }
 
-if "resetDate" not in st.session_state:
-    st.session_state["resetDate"] = datetime.date.today()
-
-if st.session_state["resetDate"] < datetime.date.today():
-    st.session_state["macros"] = []
-    st.session_state["resetDate"] = datetime.date.today()
+if "current_user" not in st.session_state:
+    st.session_state.current_user = None
 
 
 # Helper function to initialize Gemini API Client
@@ -44,6 +54,68 @@ def get_gemini_client():
     if not apikey:
         return None
     return genai.Client(api_key=apikey)
+
+
+# Calculate Calorie & Macro Requirements using Mifflin-St Jeor Formula
+def calculate_goals(age, weight_lbs, height_inches, gender, activity, goal):
+    weight_kg = weight_lbs * 0.453592
+    height_cm = height_inches * 2.54
+
+    # BMR Calculation
+    if gender == "Male":
+        bmr = (10 * weight_kg) + (6.25 * height_cm) - (5 * age) + 5
+    else:
+        bmr = (10 * weight_kg) + (6.25 * height_cm) - (5 * age) - 161
+
+    # Activity Multiplier
+    act_mult = {
+        "Sedentary": 1.2,
+        "Lightly Active": 1.375,
+        "Moderately Active": 1.55,
+        "Very Active": 1.725,
+    }
+    tdee = bmr * act_mult.get(activity, 1.2)
+
+    # Goal Adjustment
+    if goal == "Lose Weight":
+        calories = tdee - 500
+    elif goal == "Gain Muscle":
+        calories = tdee + 300
+    else:
+        calories = tdee
+
+    # Macro distribution: ~30% Protein, 40% Carbs, 30% Fat
+    protein_g = (calories * 0.30) / 4
+    carbs_g = (calories * 0.40) / 4
+    fat_g = (calories * 0.30) / 9
+
+    return {
+        "calories": max(1200, int(calories)),
+        "protein": max(50, int(protein_g)),
+        "carbs": max(50, int(carbs_g)),
+        "fat": max(30, int(fat_g)),
+    }
+
+
+# Macro Progress Ring SVG Helper
+def create_ring_svg(label, current, goal, unit, color):
+    percent = min(100, int((current / goal) * 100)) if goal > 0 else 0
+    dashoffset = 226 - (226 * percent / 100)
+
+    return f"""
+    <div style="text-align: center; margin: 10px;">
+        <svg width="100" height="100" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="36" stroke="#e6e6e6" stroke-width="8" fill="none"/>
+            <circle cx="50" cy="50" r="36" stroke="{color}" stroke-width="8" fill="none"
+                    stroke-dasharray="226" stroke-dashoffset="{dashoffset}"
+                    stroke-linecap="round" transform="rotate(-90 50 50)"/>
+            <text x="50%" y="45%" text-anchor="middle" font-size="14px" font-weight="bold" fill="#333">{percent}%</text>
+            <text x="50%" y="62%" text-anchor="middle" font-size="9px" fill="#666">{int(current)}{unit}</text>
+        </svg>
+        <div style="font-weight: bold; font-size: 14px; margin-top: 2px;">{label}</div>
+        <div style="font-size: 11px; color: #777;">Goal: {goal}{unit}</div>
+    </div>
+    """
 
 
 # AI Receipt Processing
@@ -164,82 +236,87 @@ def generate_recipes(inventory, user_macro_goals):
         return f"Error generating recipes: {e}"
 
 
-# Macro Progress Ring SVG Helper
-def create_ring_svg(label, current, goal, unit, color):
-    percent = min(100, int((current / goal) * 100)) if goal > 0 else 0
-    dashoffset = 226 - (226 * percent / 100)
+# ================= SIGN-IN SCREEN =================
+if not st.session_state.current_user:
+    st.title("🥗 FreshPulse - Sign In")
 
-    return f"""
-    <div style="text-align: center; margin: 10px;">
-        <svg width="100" height="100" viewBox="0 0 100 100">
-            <circle cx="50" cy="50" r="36" stroke="#e6e6e6" stroke-width="8" fill="none"/>
-            <circle cx="50" cy="50" r="36" stroke="{color}" stroke-width="8" fill="none"
-                    stroke-dasharray="226" stroke-dashoffset="{dashoffset}"
-                    stroke-linecap="round" transform="rotate(-90 50 50)"/>
-            <text x="50%" y="45%" text-anchor="middle" font-size="14px" font-weight="bold" fill="#333">{percent}%</text>
-            <text x="50%" y="62%" text-anchor="middle" font-size="9px" fill="#666">{int(current)}{unit}</text>
-        </svg>
-        <div style="font-weight: bold; font-size: 14px; margin-top: 2px;">{label}</div>
-        <div style="font-size: 11px; color: #777;">Goal: {goal}{unit}</div>
-    </div>
-    """
+    auth_mode = st.radio("Choose Action", ["Sign In", "Register New Account"])
 
+    username_input = st.text_input("Username")
+    password_input = st.text_input("Password", type="password")
 
-# Calculate Calorie & Macro Requirements using Mifflin-St Jeor Formula
-def calculate_goals(age, weight_lbs, height_inches, gender, activity, goal):
-    weight_kg = weight_lbs * 0.453592
-    height_cm = height_inches * 2.54
-
-    # Base BMR
-    if gender == "Male":
-        bmr = (10 * weight_kg) + (6.25 * height_cm) - (5 * age) + 5
+    if auth_mode == "Sign In":
+        if st.button("Log In"):
+            user_data = st.session_state.users_db.get(username_input)
+            if user_data and user_data["password"] == password_input:
+                st.session_state.current_user = username_input
+                st.success(f"Welcome back, {username_input}!")
+                st.rerun()
+            else:
+                st.error("Invalid username or password.")
     else:
-        bmr = (10 * weight_kg) + (6.25 * height_cm) - (5 * age) - 161
+        if st.button("Create Account"):
+            if username_input in st.session_state.users_db:
+                st.error("Username already exists!")
+            elif username_input and password_input:
+                st.session_state.users_db[username_input] = {
+                    "password": password_input,
+                    "profile": {
+                        "age": 25,
+                        "gender": "Male",
+                        "height_inches": 68,
+                        "weight_lbs": 160,
+                        "goal_weight": 150,
+                        "activity": "Moderately Active",
+                    },
+                    "inventory": [],
+                    "macros": [],
+                    "resetDate": datetime.date.today(),
+                }
+                st.session_state.current_user = username_input
+                st.success("Account created successfully!")
+                st.rerun()
+            else:
+                st.error("Please enter both a username and password.")
 
-    # Activity Multiplier
-    act_mult = {
-        "Sedentary": 1.2,
-        "Lightly Active": 1.375,
-        "Moderately Active": 1.55,
-        "Very Active": 1.725,
-    }
-    tdee = bmr * act_mult.get(activity, 1.2)
+    st.stop()  # Stop execution here if user is not signed in
 
-    # Goal Adjustment
-    if goal == "Lose Weight":
-        calories = tdee - 500
-    elif goal == "Gain Muscle":
-        calories = tdee + 300
-    else:
-        calories = tdee
+# Sync user data to session state
+user = st.session_state.current_user
+user_data = st.session_state.users_db[user]
+user_prof = user_data["profile"]
 
-    # Macro distribution: ~30% Protein, 40% Carbs, 30% Fat
-    protein_g = (calories * 0.30) / 4
-    carbs_g = (calories * 0.40) / 4
-    fat_g = (calories * 0.30) / 9
-
-    return {
-        "calories": max(1200, int(calories)),
-        "protein": max(50, int(protein_g)),
-        "carbs": max(50, int(carbs_g)),
-        "fat": max(30, int(fat_g)),
-    }
-
+if user_data["resetDate"] < datetime.date.today():
+    user_data["macros"] = []
+    user_data["resetDate"] = datetime.date.today()
 
 # ================= SIDEBAR =================
-st.sidebar.title("⚙️ Settings & User Profile")
+st.sidebar.title(f"⚙️ Profile ({user})")
+if st.sidebar.button("🚪 Log Out"):
+    st.session_state.current_user = None
+    st.rerun()
 
-# Sidebar - User Health Profile & Calculated Targets
-st.sidebar.header("👤 Your Profile & Goals")
-age = st.sidebar.number_input("Age", min_value=10, max_value=120, value=25)
-gender = st.sidebar.selectbox("Gender", ["Male", "Female"])
-height_inches = st.sidebar.number_input("Height (inches)", min_value=36, max_value=96, value=68)
-weight_lbs = st.sidebar.number_input("Current Weight (lbs)", min_value=50, max_value=500, value=150)
-goal_weight = st.sidebar.number_input("Goal Weight (lbs)", min_value=50, max_value=500, value=140)
-activity = st.sidebar.selectbox(
-    "Activity Level", ["Sedentary", "Lightly Active", "Moderately Active", "Very Active"]
-)
+st.sidebar.header("👤 Body & Goal Profile")
+age = st.sidebar.number_input("Age", min_value=10, max_value=120, value=int(user_prof["age"]))
+gender = st.sidebar.selectbox("Gender", ["Male", "Female"], index=0 if user_prof["gender"] == "Male" else 1)
+height_inches = st.sidebar.number_input("Height (inches)", min_value=36, max_value=96, value=int(user_prof["height_inches"]))
+weight_lbs = st.sidebar.number_input("Current Weight (lbs)", min_value=50, max_value=500, value=int(user_prof["weight_lbs"]))
+goal_weight = st.sidebar.number_input("Goal Weight (lbs)", min_value=50, max_value=500, value=int(user_prof["goal_weight"]))
 
+activity_options = ["Sedentary", "Lightly Active", "Moderately Active", "Very Active"]
+activity = st.sidebar.selectbox("Activity Level", activity_options, index=activity_options.index(user_prof.get("activity", "Moderately Active")))
+
+# Save updated profile parameters back to user state
+user_prof.update({
+    "age": age,
+    "gender": gender,
+    "height_inches": height_inches,
+    "weight_lbs": weight_lbs,
+    "goal_weight": goal_weight,
+    "activity": activity,
+})
+
+# Determine goal type & dynamically compute new targets
 if goal_weight < weight_lbs:
     goal_type = "Lose Weight"
 elif goal_weight > weight_lbs:
@@ -249,23 +326,24 @@ else:
 
 calculated_goals = calculate_goals(age, weight_lbs, height_inches, gender, activity, goal_type)
 
-st.sidebar.markdown(f"**Target Plan:** {goal_type}")
+st.sidebar.markdown(f"**Target Plan:** `{goal_type}`")
+st.sidebar.markdown(f"**Target Calories:** `{calculated_goals['calories']} kcal`")
 
 # Macro Limits Customization
-st.sidebar.header("🎯 Daily Nutrition Targets")
+st.sidebar.header("🎯 Active Macro Targets")
 carbstracker = st.sidebar.checkbox("Track Carbohydrates?", value=True)
 carbslimit = st.sidebar.number_input(
-    "Carb Limit (g)", min_value=1, value=calculated_goals["carbs"]
+    "Carb Target (g)", min_value=1, value=calculated_goals["carbs"]
 ) if carbstracker else 0
 
 proteintracker = st.sidebar.checkbox("Track Protein?", value=True)
 proteingoal = st.sidebar.number_input(
-    "Protein Goal (g)", min_value=1, value=calculated_goals["protein"]
+    "Protein Target (g)", min_value=1, value=calculated_goals["protein"]
 ) if proteintracker else 0
 
 fattracker = st.sidebar.checkbox("Track Fat?", value=True)
 fatlimit = st.sidebar.number_input(
-    "Fat Limit (g)", min_value=1, value=calculated_goals["fat"]
+    "Fat Target (g)", min_value=1, value=calculated_goals["fat"]
 ) if fattracker else 0
 
 sodiumtracker = st.sidebar.checkbox("Track Sodium?", value=True)
@@ -284,7 +362,7 @@ if barcodePicture and st.sidebar.button("Process Product Photo"):
         scannedBC = barcode_ai(barcodeImg)
 
     if scannedBC:
-        st.session_state["inventory"].append(scannedBC)
+        user_data["inventory"].append(scannedBC)
         st.sidebar.success(f"Added {scannedBC['Name']}")
         st.rerun()
 
@@ -314,23 +392,23 @@ if st.sidebar.button("Add Item Manually"):
             "Sodium": 0.0,
             "Serving": "1 serving",
         }
-        st.session_state["inventory"].append(addItem)
+        user_data["inventory"].append(addItem)
         st.sidebar.success(f"Added {handName} successfully!")
         st.rerun()
 
 
 # ================= MAIN PAGE UI =================
 st.title("🥗 FreshPulse")
-st.write("Keep Track of Your Food to Help Stop Grocery Waste!")
+st.write(f"Logged in as **{user}** | Track inventory and manage health goals.")
 
 tab1, tab2 = st.tabs(["📊 Inventory & Dashboard", "🍳 AI Recipes & Health Suggestions"])
 
 # ---------------- TAB 1: DASHBOARD & INVENTORY ----------------
 with tab1:
-    eatenCarbs = sum(item.get("Carbs", 0) for item in st.session_state["macros"])
-    eatenProtein = sum(item.get("Protein", 0) for item in st.session_state["macros"])
-    eatenFat = sum(item.get("Fat", 0) for item in st.session_state["macros"])
-    eatenSodium = sum(item.get("Sodium", 0) for item in st.session_state["macros"])
+    eatenCarbs = sum(item.get("Carbs", 0) for item in user_data["macros"])
+    eatenProtein = sum(item.get("Protein", 0) for item in user_data["macros"])
+    eatenFat = sum(item.get("Fat", 0) for item in user_data["macros"])
+    eatenSodium = sum(item.get("Sodium", 0) for item in user_data["macros"])
 
     st.markdown("### 🎯 Your Daily Nutrition Progress")
 
@@ -369,7 +447,7 @@ with tab1:
             prcsdItems = aircpt(img)
         for item in prcsdItems:
             life = int(item.get("life", 6))
-            st.session_state["inventory"].append(
+            user_data["inventory"].append(
                 {
                     "Name": item.get("name", "Unknown"),
                     "Emoji": item.get("emoji", "🍽️"),
@@ -392,10 +470,10 @@ with tab1:
     st.header("🛒 Your Grocery Cart")
     today = datetime.date.today()
 
-    if len(st.session_state["inventory"]) < 1:
+    if len(user_data["inventory"]) < 1:
         st.info("No items in your inventory. Add items using the sidebar or upload a receipt!")
     else:
-        for index, item in enumerate(st.session_state["inventory"]):
+        for index, item in enumerate(user_data["inventory"]):
             remainLife = (item["Expires"] - today).days
             totalLife = (item["Expires"] - item["Date Added"]).days
 
@@ -429,11 +507,11 @@ with tab1:
 
             with col2:
                 if st.button("Mark as Eaten", key=f"btn_{index}"):
-                    if st.session_state["resetDate"] < datetime.date.today():
-                        st.session_state["macros"] = []
-                        st.session_state["resetDate"] = datetime.date.today()
-                    eaten = st.session_state["inventory"].pop(index)
-                    st.session_state["macros"].append(eaten)
+                    if user_data["resetDate"] < datetime.date.today():
+                        user_data["macros"] = []
+                        user_data["resetDate"] = datetime.date.today()
+                    eaten = user_data["inventory"].pop(index)
+                    user_data["macros"].append(eaten)
                     st.rerun()
 
 # ---------------- TAB 2: AI RECIPES & HEALTH ----------------
@@ -450,7 +528,7 @@ with tab2:
 
     if st.button("✨ Generate Recipes from My Inventory"):
         with st.spinner("Analyzing ingredients and crafting personalized recipes..."):
-            recipe_output = generate_recipes(st.session_state["inventory"], user_goals)
+            recipe_output = generate_recipes(user_data["inventory"], user_goals)
             st.markdown(recipe_output)
 
 st.divider()
