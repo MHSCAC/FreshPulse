@@ -99,7 +99,7 @@ config=types.GenerateContentConfig(response_mime_type="application/json")
         return []
 
 #Section 2b: Rings for Macro Stats-Did use AI for this part, way too complicated for me
-def create_ring_svg(label, current, goal, unit, color):
+def create_ring_svg(label, current, goal, unit, color, goal_label="Goal"):
     percent = min(100, int((current / goal) * 100)) if goal > 0 else 0
     # SVG circle circumference math (r=36 -> C ≈ 226)
     dashoffset = 226 - (226 * percent / 100)
@@ -115,7 +115,8 @@ def create_ring_svg(label, current, goal, unit, color):
             <text x="50%" y="62%" text-anchor="middle" font-size="9px" fill="#666">{int(current)}{unit}</text>
         </svg>
         <div style="font-weight: bold; font-size: 14px; margin-top: 2px;">{label}</div>
-        <div style="font-size: 11px; color: #777;">Goal: {goal}{unit}</div>
+                <div style="font-size: 11px; color: #777;">{goal_label}: {goal}{unit}</div>
+
     </div>
     """
 
@@ -280,7 +281,7 @@ if user_data["resetDate"] < datetime.date.today():
 
 #Section 4:Entering Item By Barcode Sidebar
 
-st.sidebar.title(f"⚙️ Your Profile,{user}") #This tells streamlit(makes our UI) to include a sidebar in our web app
+st.sidebar.title(f"⚙️ Your Profile, {user}") #This tells streamlit(makes our UI) to include a sidebar in our web app
 
 #Section 4a/Header 1-User Profile Settings==========================================================================================================================================================================================================================Under Review
 st.sidebar.header("👤 Body & Goal Profile")
@@ -309,6 +310,13 @@ else:
     goal_type = "Maintain Weight"
 calculated_goals = calculate_goals(user_prof["age"], user_prof["weight_lbs"], user_prof["height_inches"],
                                    user_prof["gender"], user_prof["activity"], goal_type)
+#Pick the label word based on the user's goal: gaining = a Goal to hit, losing = a Limit to stay under
+if goal_type == "Gain Muscle":
+    goal_word = "Goal"
+elif goal_type == "Lose Weight":
+    goal_word = "Limit"
+else:
+    goal_word = "Target"
 st.sidebar.markdown(f"**Target Plan:** `{goal_type}` | **Calories:** `{calculated_goals['calories']} kcal`")
 st.sidebar.divider()
 
@@ -398,22 +406,22 @@ with tab1:
 
     if carbstracker and active_idx < 4:
         with cols[active_idx]:
-            st.markdown(create_ring_svg("Carbs", eatenCarbs, carbslimit, "g", "#FF4B4B"), unsafe_allow_html=True)
+            st.markdown(create_ring_svg("Carbs", eatenCarbs, carbslimit, "g", "#FF4B4B", goal_word), unsafe_allow_html=True)
         active_idx += 1
 
     if proteintracker and active_idx < 4:
         with cols[active_idx]:
-            st.markdown(create_ring_svg("Protein", eatenProtein, proteingoal, "g", "#00C04D"), unsafe_allow_html=True)
+            st.markdown(create_ring_svg("Protein", eatenProtein, proteingoal, "g", "#00C04D", goal_word), unsafe_allow_html=True)
         active_idx += 1
 
     if fattracker and active_idx < 4:
         with cols[active_idx]:
-            st.markdown(create_ring_svg("Fat", eatenFat, fatlimit, "g", "#FFA500"), unsafe_allow_html=True)
+            st.markdown(create_ring_svg("Fat", eatenFat, fatlimit, "g", "#FFA500", goal_word), unsafe_allow_html=True)
         active_idx += 1
 
     if (sodiumtracker and active_idx < 4):
         with cols[active_idx]:
-            st.markdown(create_ring_svg("Sodium", eatenSodium, sodiumlimit, "mg", "#29B6F6"), unsafe_allow_html=True)
+            st.markdown(create_ring_svg("Sodium", eatenSodium, sodiumlimit, "mg", "#29B6F6", goal_word), unsafe_allow_html=True)
         active_idx += 1
 
     st.divider()
@@ -459,28 +467,28 @@ with tab1:
 
         if(carbstracker):
             with m_col1:
-                st.metric("Carbs", f"{ttlcarbs:.1f}g", f"Goal/Limit:{carbslimit}g") #.1fg rounds decimal place to the tenth, ASK FOR USER WANTS WITH THIS ONE
+                st.metric("Carbs", f"{ttlcarbs:.1f}g", f"{goal_word}:{carbslimit}g") #.1fg rounds decimal place to the tenth, ASK FOR USER WANTS WITH THIS ONE
                 st.progress(min(1.0, ttlcarbs / carbslimit) if carbslimit > 0 else 0.0) #Purpose of this is to find out if the user has reached their carb limit or not
                 if(ttlcarbs>carbslimit):
                     st.error("Carb Limit Reached! Come on Bro")
 
         if(proteintracker):
             with m_col2:
-                st.metric("Protein", f"{ttlprotein:.1f}g", f"Goal/Limit:{proteingoal}g")
+                st.metric("Protein", f"{ttlprotein:.1f}g", f"{goal_word}:{proteingoal}g")
                 st.progress(min(1.0, ttlprotein/proteingoal) if proteingoal>0 else 0.0) # the if statement makes sure that if the user never check marked the goals or tracker, then no error would occur
                 if (ttlprotein>proteingoal):
                     st.success("Protein Goal Hit! Yessir")#Maybe make the phrases and bad phrases random?
 
         if(fattracker):
             with m_col3:
-                st.metric("Fat", f"{ttlfat:.1f}g", f"Goal/Limit:{fatlimit}g" ) #Not incluidng commas will show Goal/Limit on columns
+                st.metric("Fat", f"{ttlfat:.1f}g", f"{goal_word}:{fatlimit}g" ) #Not incluidng commas will show Goal/Limit on columns
                 st.progress(min(1.0,ttlfat/fatlimit) if fatlimit>0 else 0.0)
                 if(ttlfat>fatlimit):
                     st.error("Fat Limit Hit! Are We Serious?") #Make random phrases in a list which index pos is picked at random and then added?
 
         if(sodiumtracker):
             with m_col4:
-                st.metric("Sodium", f"{ttlsodium:.1f}mg",f"Goal/Limit: {sodiumlimit}mg")
+                st.metric("Sodium", f"{ttlsodium:.1f}mg",f"{goal_word}: {sodiumlimit}mg")
                 st.progress(min(1.0,ttlsodium/sodiumlimit) if sodiumlimit>0 else 0.0)
                 if(ttlsodium>sodiumlimit):
                     st.error("You Reached Your Sodium Limit! Come On")
