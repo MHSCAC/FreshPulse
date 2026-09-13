@@ -22,6 +22,12 @@ import os
 
 #Comments near st.rerun()-This makes the web app re-run and update the page after the user adds an item to their inventory, so they can see the item they just added
 
+#Add advanced API to make processing images and creating recipes faster and easier.
+
+
+
+
+
 #Prevent Accidental Refreshes and To Alert User
 
 #Did use AI for this part
@@ -272,12 +278,9 @@ if user_data["resetDate"] < datetime.date.today():
 
 #Section 4:Entering Item By Barcode Sidebar
 
-st.sidebar.title(f"⚙️ Your Profile,({user})") #This tells streamlit(makes our UI) to include a sidebar in our web app
+st.sidebar.title(f"⚙️ Your Profile,{user}") #This tells streamlit(makes our UI) to include a sidebar in our web app
 
 #Section 4a/Header 1-User Profile Settings==========================================================================================================================================================================================================================Under Review
-if st.sidebar.button("🚪 Log Out"):
-    st.session_state.current_user = None
-    st.rerun()
 st.sidebar.header("👤 Body & Goal Profile")
 with st.sidebar.form("profile_form"):
     age_input = st.number_input("Age", min_value=10, max_value=120, value=int(user_prof["age"]))
@@ -327,7 +330,7 @@ if barcodePicture and st.sidebar.button("🔍 Process Barcode Photo"): #If user 
 st.sidebar.divider()
 
 #Section 4c/Header 3-Manual Item Entering==========================================================================================================================================================================================================================Under Review
-st.sidebar.header("➕ Add Item")
+st.sidebar.header("➕ Manually Add Item")
 handName = st.sidebar.text_input("Enter Item Name Here: ")
 handEmoji = st.sidebar.text_input("Emoji", value="🍽️")
 handDays = st.sidebar.number_input("Item Life (in days): ", min_value=1, value=7)
@@ -363,7 +366,10 @@ fatlimit=st.sidebar.number_input("Fat Limit/Goal(grams)", min_value=1, value=cal
 sodiumtracker=st.sidebar.checkbox("Sodium Tracker?", value=True)
 sodiumlimit=st.sidebar.number_input("Sodium Limit/Goal (milligrams)", min_value=1, value=2300) if sodiumtracker else 0#=============================================================================================================================================================================Under Review
 
-
+#Section 4e/Header 5-Log Out Button
+if st.sidebar.button("🚪 Log Out"):
+    st.session_state.current_user = None
+    st.rerun()
 
 
 #Section 5:Entering Pic for AI Processing
