@@ -470,29 +470,40 @@ with tab1:
                 st.metric("Carbs", f"{ttlcarbs:.1f}g", f"{goal_word}:{carbslimit}g") #.1fg rounds decimal place to the tenth, ASK FOR USER WANTS WITH THIS ONE
                 st.progress(min(1.0, ttlcarbs / carbslimit) if carbslimit > 0 else 0.0) #Purpose of this is to find out if the user has reached their carb limit or not
                 if(ttlcarbs>carbslimit):
-                    st.error("Carb Limit Reached! Come on Bro")
+                    if goal_word == "Goal":
+                        st.success("You Smashed the Carb Goal! 💥 ")
+                    else:
+                        st.error("Carb Limit Reached! Come on Bro")
 
         if(proteintracker):
             with m_col2:
                 st.metric("Protein", f"{ttlprotein:.1f}g", f"{goal_word}:{proteingoal}g")
-                st.progress(min(1.0, ttlprotein/proteingoal) if proteingoal>0 else 0.0) # the if statement makes sure that if the user never check marked the goals or tracker, then no error would occur
+                st.progress(min(1.0, ttlprotein/proteingoal) if proteingoal>0 else 0.0) #the if statement makes sure that if the user never check marked the goals or tracker, then no error would occur
                 if (ttlprotein>proteingoal):
-                    st.success("Protein Goal Hit! Yessir")#Maybe make the phrases and bad phrases random?
+                    if goal_word == "Goal":
+                        st.success("Protein Goal Hit! Lets Go! 💪")#Maybe make the phrases and bad phrases random?
+                    else:
+                        st.error("Protein Limit Reached! Come on Bro")
 
         if(fattracker):
             with m_col3:
                 st.metric("Fat", f"{ttlfat:.1f}g", f"{goal_word}:{fatlimit}g" ) #Not incluidng commas will show Goal/Limit on columns
                 st.progress(min(1.0,ttlfat/fatlimit) if fatlimit>0 else 0.0)
                 if(ttlfat>fatlimit):
-                    st.error("Fat Limit Hit! Are We Serious?") #Make random phrases in a list which index pos is picked at random and then added?
+                    if goal_word == "Goal":
+                        st.success("Fat Goal Hit! Keep It Up!👌") #Make random phrases in a list which index pos is picked at random and then added?
+                    else:
+                        st.error("Fat Limit Hit! Are We Serious?") 
 
         if(sodiumtracker):
             with m_col4:
                 st.metric("Sodium", f"{ttlsodium:.1f}mg",f"{goal_word}: {sodiumlimit}mg")
                 st.progress(min(1.0,ttlsodium/sodiumlimit) if sodiumlimit>0 else 0.0)
                 if(ttlsodium>sodiumlimit):
-                    st.error("You Reached Your Sodium Limit! Come On")
-
+                    if goal_word == "Goal":
+                        st.success("Sodium Goal Obliterated! You Got Respect 🫡") 
+                    else:
+                        st.error("Sodium Limit Hit! Are We Serious?")
     st.divider()
     st.header("🛒 Your Grocery Cart")
     today=datetime.date.today()#Expiration Date-Today's Date will equal the countdown time, that is why we need to add this line, IMPORTANT
