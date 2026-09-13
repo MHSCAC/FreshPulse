@@ -213,6 +213,8 @@ def generate_recipes(inventory, user_macro_goals):
     {user_macro_goals.get('carbs')}g carbs, {user_macro_goals.get('fat')}g fat.
     Give 2-3 recipes using mostly their ingredients, list any missing items, show estimated nutrition
     per recipe, and add a 'Health Impact' note for each. Format neatly in Markdown.
+    Start each recipe title with a food emoji that matches the dish, written as a Markdown heading,
+    for example: "## 🍝 Recipe 1: Garlic Butter Pasta". Format the whole response neatly in Markdown.
     """
     try:
         response = client.models.generate_content(model='gemini-3.6-flash', contents=recipe_prompt)
