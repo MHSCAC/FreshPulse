@@ -388,7 +388,7 @@ if st.sidebar.button("🚪 Log Out"):
 #which then gets sent to AI to process and return the keys to the code
 
 st.title("🥗 FreshPulse")#THIS IS THE NAME OF THE APP
-st.write("Keep Track of Your Food to Help Stop Grocery Waste!")
+st.write("Keep Track of Your Food to Stay Eating Healthy!")
 
 tab1, tab2 = st.tabs(["📊 Inventory & Dashboard", "🍳 AI Recipes"])#=======================================================================================================================================================================================================================================Under Review
 
